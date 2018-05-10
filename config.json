@@ -1,0 +1,25 @@
+{
+  "tokenDecimals": "ether",
+  "contractAddresses": {
+    "MainframeToken": {
+      "testnet": "0x2d121ef6f00b7c3a58b211441841ef713c07cdb4"
+    },
+    "MainframeStake": {
+      "testnet": "0x2b0b236cf8c6623d244893176817c9eee317e2a2"
+    },
+    "MainframeDistribution": {
+      "testnet": "0x5a9A1a42e1d541260E89034E73d1722a45575783"
+    },
+    "ENS": {
+      "testnet": "0x112234455c3a32fd11230c42e7bccd4a84e02010",
+      "mainnet": "0x314159265dd8dbb310642f98f50c066173c1259b"
+    },
+    "ENSResolver": {
+      "testnet": "0x4c641fb9bad9b60ef180c31f56051ce826d21a9a"
+    }
+  },
+  "rpcUrl": {
+    "testnet": "https://ropsten.infura.io/KWLG1YOMaYgl4wiFlcJv",
+    "mainnet": "https://mainnet.infura.io/KWLG1YOMaYgl4wiFlcJv"
+  }
+}
