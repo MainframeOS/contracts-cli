@@ -15,7 +15,11 @@
       "mainnet": "0x314159265dd8dbb310642f98f50c066173c1259b"
     },
     "ENSResolver": {
-      "testnet": "0x4c641fb9bad9b60ef180c31f56051ce826d21a9a"
+      "testnet": "0x4c641fb9bad9b60ef180c31f56051ce826d21a9a",
+      "mainnet": "0x5FfC014343cd971B7eb70732021E26C35B744cc4"
+    },
+    "FIFSRegistrar": {
+      "testnet": "0x21397c1A1F4aCD9132fE36Df011610564b87E24b"
     }
   },
   "rpcUrl": {
