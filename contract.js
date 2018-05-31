@@ -7,7 +7,13 @@ const { log } = require('./cli-utils')
 const namehash = require('eth-ens-namehash')
 const { GAS_LIMIT, GAS_PRICE } = require('./constants')
 
-const callCustomHandler = (contractName, method, web3Contract, ethNetwork, account) => {
+const callCustomHandler = (
+  contractName,
+  method,
+  web3Contract,
+  ethNetwork,
+  account,
+) => {
   const customHandler = customHandlers[contractName]
   if (customHandler && customHandler[method]) {
     customHandler[method](web3Contract, ethNetwork, account)
@@ -35,14 +41,10 @@ const callMethod = async (
   contractName,
   method,
   account,
-  ethNetwork
+  ethNetwork,
 ) => {
-  if (callCustomHandler(
-    contractName,
-    method,
-    web3Contract,
-    ethNetwork,
-    account)
+  if (
+    callCustomHandler(contractName, method, web3Contract, ethNetwork, account)
   ) {
     return
   }
@@ -73,7 +75,7 @@ const callMethod = async (
           name: 'conversion',
           message: `Conversion type: `,
           choices: ['fromWei', 'toWei'],
-        }
+        },
       ]
     } else if (m.type === 'bytes32') {
       q.extraQuestions = [
@@ -87,7 +89,7 @@ const callMethod = async (
           name: 'encodeType',
           message: `Hash type: `,
           choices: ['nameHash', 'sha3', 'toHex'],
-        }
+        },
       ]
     }
     return q
@@ -113,7 +115,8 @@ const callMethod = async (
     }
     args.push(arg)
   }
-  const readOnly = abiMethod.stateMutability === 'view' || abiMethod.constant === true
+  const readOnly =
+    abiMethod.stateMutability === 'view' || abiMethod.constant === true
   const methodType = readOnly ? 'call' : 'send'
 
   if (methodType === 'send') {
@@ -138,12 +141,14 @@ const callMethod = async (
   console.log('result: ', transaction)
 }
 
-const validateTransaction = async (message) => {
-  const answers = await prompt([{
-    type: 'confirm',
-    name: 'confirm',
-    message: message,
-  }])
+const validateTransaction = async message => {
+  const answers = await prompt([
+    {
+      type: 'confirm',
+      name: 'confirm',
+      message: message,
+    },
+  ])
   if (!answers.confirm) {
     throw new Error('Transaction cancelled')
   }
