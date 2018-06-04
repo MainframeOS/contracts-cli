@@ -22,44 +22,52 @@ let ethNetwork = 'testnet' // testnet or mainnet
 let account
 
 const determineNetwork = async () => {
-  const answers = await prompt([{
-    type: 'list',
-    name: 'network',
-    message: 'Select Ethereum network: ',
-    choices: ['testnet', 'mainnet']
-  }])
+  const answers = await prompt([
+    {
+      type: 'list',
+      name: 'network',
+      message: 'Select Ethereum network: ',
+      choices: ['testnet', 'mainnet'],
+    },
+  ])
   ethNetwork = answers.network
 }
 
 const requestPrivateKey = async () => {
-  const answers = await prompt([{
-    type: 'password',
-    name: 'privateKey',
-    message: 'Enter private key: ',
-  }])
+  const answers = await prompt([
+    {
+      type: 'password',
+      name: 'privateKey',
+      message: 'Enter private key: ',
+    },
+  ])
   return answers.privateKey
 }
 
 const requestMnemonic = async () => {
-  const answers = await prompt([{
-    type: 'password',
-    name: 'mnemonic',
-    message: 'Enter mnemonic passphrase: ',
-  }])
+  const answers = await prompt([
+    {
+      type: 'password',
+      name: 'mnemonic',
+      message: 'Enter mnemonic passphrase: ',
+    },
+  ])
   return answers.mnemonic
 }
 
-const requestAccountSelection = async (accounts) => {
-  const answers = await prompt([{
-    type: 'list',
-    name: 'account',
-    message: 'Select ETH account: ',
-    choices: accounts,
-  }])
+const requestAccountSelection = async accounts => {
+  const answers = await prompt([
+    {
+      type: 'list',
+      name: 'account',
+      message: 'Select ETH account: ',
+      choices: accounts,
+    },
+  ])
   return accounts.indexOf(answers.account)
 }
 
-const decodeKeystore = async() => {
+const decodeKeystore = async () => {
   const answers = await prompt([
     {
       type: 'input',
@@ -70,7 +78,7 @@ const decodeKeystore = async() => {
       type: 'input',
       name: 'password',
       message: 'Enter password to decrypt file: ',
-    }
+    },
   ])
   const file = await fs.readJson(answers.keystorePath)
   const accounts = new Accounts()
@@ -79,12 +87,14 @@ const decodeKeystore = async() => {
 }
 
 const requestWalletAccessType = async () => {
-  const answers = await prompt([{
-    type: 'list',
-    name: 'wallet',
-    message: 'Wallet source:',
-    choices: ['Private Key', 'Mnemonic', 'Ledger', 'Keystore File'],
-  }])
+  const answers = await prompt([
+    {
+      type: 'list',
+      name: 'wallet',
+      message: 'Wallet source:',
+      choices: ['Private Key', 'Mnemonic', 'Ledger', 'Keystore File'],
+    },
+  ])
   let provider
   switch (answers.wallet) {
     case 'Private Key':
@@ -111,27 +121,69 @@ const requestWalletAccessType = async () => {
       try {
         const ledgerWalletSubProvider = await LedgerWalletSubproviderFactory()
 
-        // Select ledger account to use
-        const accounts = await ledgerWalletSubProvider.ledger.getMultipleAccounts(LEDGER_ROOT_PATH, 0, 10)
-        const accountAddresses = Object.values(accounts)
-        const accountPaths = Object.keys(accounts)
-        const account = Object.values(accounts)
-        accountIndex = await requestAccountSelection(accountAddresses)
-        const selectedPath = accountPaths[accountIndex]
+        // If needing to select high index account on ledger ask for input
+
+        const choices = ['select from first 10', 'enter account index']
+        const answers = await prompt([
+          {
+            type: 'list',
+            name: 'accountSelect',
+            message: 'Ledger account select: ',
+            choices,
+          },
+        ])
+
+        let selectedPath
+
+        switch (choices.indexOf(answers.accountSelect)) {
+          case 0:
+            // Select ledger account from list
+            const listAccounts = await ledgerWalletSubProvider.ledger.getMultipleAccounts(
+              LEDGER_ROOT_PATH,
+              0,
+              10,
+            )
+            const accountAddresses = Object.values(listAccounts)
+            const accountPaths = Object.keys(listAccounts)
+            const account = Object.values(listAccounts)
+            accountIndex = await requestAccountSelection(accountAddresses)
+            selectedPath = accountPaths[accountIndex]
+            break
+
+          case 1:
+            // Select ledger account from input index
+            const ledgerIndexAnswers = await prompt([
+              {
+                type: 'input',
+                name: 'accountIndex',
+                message: 'Ledger account select: ',
+              },
+            ])
+            const accounts = await ledgerWalletSubProvider.ledger.getMultipleAccounts(
+              LEDGER_ROOT_PATH,
+              Number(ledgerIndexAnswers.accountIndex) - 1,
+              1,
+            )
+            selectedPath = Object.keys(accounts)[0]
+        }
 
         // Set selected account as provider
         const networkId = ethNetwork === 'testnet' ? 3 : 1
-        const ledgerWalletSelectedProvider = await LedgerWalletSubproviderFactory(() => networkId, selectedPath)
+        const ledgerWalletSelectedProvider = await LedgerWalletSubproviderFactory(
+          () => networkId,
+          selectedPath,
+        )
         engine.addProvider(ledgerWalletSelectedProvider)
-        engine.addProvider(new RpcSubprovider({rpcUrl: config.rpcUrl[ethNetwork]}))
+        engine.addProvider(
+          new RpcSubprovider({ rpcUrl: config.rpcUrl[ethNetwork] }),
+        )
         engine.start()
       } catch (err) {
         console.log(err)
         console.log(`Error connecting to Ledger, please make sure:\n
         - You have entered your pin and unlocked your ledger\n
         - Selected Ethereum wallet\n
-        - Have browser support turned off`
-        )
+        - Have browser support turned off`)
         process.exit()
       }
       break
@@ -149,23 +201,27 @@ const selectMethod = async (web3Contract, contractName) => {
     return acc
   }, [])
   log.header(`${capitalize(contractName)} Contract`)
-  const answers = await prompt([{
-    type: 'list',
-    name: 'method',
-    message: 'Select contract action: ',
-    choices: methods,
-  }])
+  const answers = await prompt([
+    {
+      type: 'list',
+      name: 'method',
+      message: 'Select contract action: ',
+      choices: methods,
+    },
+  ])
   return answers.method
 }
 
 const selectContractName = async () => {
   const contractNames = await availableContracts()
-  const answers = await prompt([{
-    type: 'list',
-    name: 'contract',
-    message: 'Select contract: ',
-    choices: contractNames,
-  }])
+  const answers = await prompt([
+    {
+      type: 'list',
+      name: 'contract',
+      message: 'Select contract: ',
+      choices: contractNames,
+    },
+  ])
   return answers.contract
 }
 
@@ -190,7 +246,13 @@ const requestContractMethod = async (web3, ethNetwork) => {
   const contractName = await selectContractName()
   const web3Contract = await getWeb3Contract(contractName, web3, ethNetwork)
   const methodName = await selectMethod(web3Contract, contractName)
-  await contract.callMethod(web3Contract, contractName, methodName, account, ethNetwork)
+  await contract.callMethod(
+    web3Contract,
+    contractName,
+    methodName,
+    account,
+    ethNetwork,
+  )
 }
 
 const initialize = async () => {
@@ -203,7 +265,9 @@ const initialize = async () => {
       err.message &&
       err.message.includes('Failed to subscribe to new newBlockHeaders')
     ) {
-      log.info('Please visit etherscan to check transaction status for transactions signed by a ledger')
+      log.info(
+        'Please visit etherscan to check transaction status for transactions signed by a ledger',
+      )
     } else {
       log.warn('Error: ' + err.message)
       log.info(err.stack)
