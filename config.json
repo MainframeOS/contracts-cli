@@ -2,13 +2,16 @@
   "tokenDecimals": "ether",
   "contractAddresses": {
     "MainframeToken": {
-      "testnet": "0x2d121ef6f00b7c3a58b211441841ef713c07cdb4"
+      "testnet": "0x2d121ef6f00b7c3a58b211441841ef713c07cdb4",
+      "mainnet": "0x46627F7f7F41197A47528c52cdD2F4575b49Cc56"
     },
     "MainframeStake": {
-      "testnet": "0x2b0b236cf8c6623d244893176817c9eee317e2a2"
+      "testnet": "0x2b0b236cf8c6623d244893176817c9eee317e2a2",
+      "mainnet": "0x459Ec81aBaaA2f95EE0a1Ad35Df62ae4bDF3c3d2"
     },
     "MainframeDistribution": {
-      "testnet": "0x5a9A1a42e1d541260E89034E73d1722a45575783"
+      "testnet": "0x5a9A1a42e1d541260E89034E73d1722a45575783",
+      "mainnet": "0x6fD1B41e9FFC477C6801a26f6F36DE48746Bee74"
     },
     "ENS": {
       "testnet": "0x112234455c3a32fd11230c42e7bccd4a84e02010",
