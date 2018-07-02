@@ -7,17 +7,10 @@ const { log } = require('./cli-utils')
 const namehash = require('eth-ens-namehash')
 const { GAS_LIMIT, GAS_PRICE } = require('./constants')
 
-const callCustomHandler = (
-  contractName,
-  method,
-  web3Contract,
-  ethNetwork,
-  account,
-) => {
+const getCustomHandler = (contractName, method) => {
   const customHandler = customHandlers[contractName]
   if (customHandler && customHandler[method]) {
-    customHandler[method](web3Contract, ethNetwork, account)
-    return true
+    return customHandler[method]
   }
 }
 
@@ -43,9 +36,9 @@ const callMethod = async (
   account,
   ethNetwork,
 ) => {
-  if (
-    callCustomHandler(contractName, method, web3Contract, ethNetwork, account)
-  ) {
+  const customHandler = getCustomHandler(contractName, method)
+  if (customHandler) {
+    await customHandler(web3Contract, ethNetwork, account)
     return
   }
   const abiMethod = web3Contract._jsonInterface.find(m => m.name == method)

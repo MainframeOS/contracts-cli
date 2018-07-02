@@ -6,17 +6,23 @@ const utils = require('web3-utils')
 const config = require('../config')
 const tokenAbi = require('../abi/MainframeDistribution.json')
 const { log } = require('../cli-utils')
-const { GAS_LIMIT, GAS_PRICE } = require('../constants')
+const { GAS_PRICE } = require('../constants')
 
 const distributeTokens = async (web3Contract, ethNetwork, account) => {
   const data = await parseCSV()
   await validateDistribution(data, account, ethNetwork)
+  const gasLimit = await estimateGas(
+    web3Contract,
+    account,
+    data.recipients,
+    data.amounts,
+  )
   log.info('Pending transaction...', 'blue')
   const transaction = await web3Contract.methods
     .distributeTokens(account, data.recipients, data.amounts)
     .send({
       from: account,
-      gas: GAS_LIMIT,
+      gas: gasLimit,
       gasPrice: GAS_PRICE,
     })
   log.success('Transaction complete!')
@@ -46,6 +52,26 @@ const parseCSV = async () => {
       })
       .on('error', reject)
   })
+}
+
+const estimateGas = async (web3Contract, account, recipients, amounts) => {
+  const estimatedGas = await web3Contract.methods
+    .distributeTokens(account, recipients, amounts)
+    .estimateGas({ from: account })
+  log.info(`estimatd gas: ${estimatedGas}`, 'blue')
+  const answers = await prompt([
+    {
+      type: 'confirm',
+      name: 'confirm',
+      message: 'Proceed with estimated gas: ',
+    },
+  ])
+  if (!answers.confirm) {
+    log.warn('Distribution terminated')
+    process.exit()
+  } else {
+    return estimatedGas
+  }
 }
 
 const validateDistribution = async (data, fromAccount, ethNetwork) => {
