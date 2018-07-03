@@ -92,6 +92,7 @@ const initialize = async () => {
     await determineNetwork()
     web3 = await openWallet(ethNetwork)
     account = await web3.eth.getCoinbase()
+
     log.info(`Using account: ${account}`, 'blue')
     await requestContractMethod(web3, ethNetwork)
   } catch (err) {

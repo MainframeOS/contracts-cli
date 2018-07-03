@@ -5,9 +5,8 @@ const utils = require('web3-utils')
 
 const config = require('../config')
 const tokenAbi = require('../abi/MainframeDistribution.json')
-const { estimateGas } = require('../helpers')
+const { estimateGas, getRecomendedGasPrice } = require('../helpers')
 const { log } = require('../cli-utils')
-const { GAS_PRICE } = require('../constants')
 
 const distributeTokens = async (web3Contract, ethNetwork, account) => {
   const data = await parseCSV()
@@ -18,14 +17,16 @@ const distributeTokens = async (web3Contract, ethNetwork, account) => {
     account,
     [account, data.recipients, data.amounts],
   )
-  console.log('gas limit: ', gasLimit)
+  const gasPrice = await getRecomendedGasPrice()
+  log.info(`Estimated gas: ${gasLimit}`, 'blue')
+  log.info(`Recommended gas price: ${gasPrice}`, 'blue')
   log.info('Pending transaction...', 'blue')
   const transaction = await web3Contract.methods
     .distributeTokens(account, data.recipients, data.amounts)
     .send({
       from: account,
       gas: gasLimit,
-      gasPrice: GAS_PRICE,
+      gasPrice: gasPrice,
     })
   log.success('Transaction complete!')
   console.log(transaction)
