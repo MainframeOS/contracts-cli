@@ -5,6 +5,7 @@ const utils = require('web3-utils')
 
 const config = require('../config')
 const tokenAbi = require('../abi/MainframeDistribution.json')
+const { estimateGas } = require('../helpers')
 const { log } = require('../cli-utils')
 const { GAS_PRICE } = require('../constants')
 
@@ -13,10 +14,11 @@ const distributeTokens = async (web3Contract, ethNetwork, account) => {
   await validateDistribution(data, account, ethNetwork)
   const gasLimit = await estimateGas(
     web3Contract,
+    'distributeTokens',
     account,
-    data.recipients,
-    data.amounts,
+    [account, data.recipients, data.amounts],
   )
+  console.log('gas limit: ', gasLimit)
   log.info('Pending transaction...', 'blue')
   const transaction = await web3Contract.methods
     .distributeTokens(account, data.recipients, data.amounts)
@@ -54,31 +56,15 @@ const parseCSV = async () => {
   })
 }
 
-const estimateGas = async (web3Contract, account, recipients, amounts) => {
-  const estimatedGas = await web3Contract.methods
-    .distributeTokens(account, recipients, amounts)
-    .estimateGas({ from: account })
-  log.info(`estimatd gas: ${estimatedGas}`, 'blue')
-  const answers = await prompt([
-    {
-      type: 'confirm',
-      name: 'confirm',
-      message: 'Proceed with estimated gas: ',
-    },
-  ])
-  if (!answers.confirm) {
-    log.warn('Distribution terminated')
-    process.exit()
-  } else {
-    return estimatedGas
-  }
-}
-
-const validateDistribution = async (data, fromAccount, ethNetwork) => {
-  const dataForDisplay = data.recipients.reduce((string, r, i) => {
+const formatDataForDisplay = data => {
+  return data.recipients.reduce((string, r, i) => {
     const amount = data.amounts[i]
     return (string += `${r} : ${utils.fromWei(amount, config.tokenDecimals)}\n`)
   }, '')
+}
+
+const validateDistribution = async (data, fromAccount, ethNetwork) => {
+  const dataForDisplay = formatDataForDisplay(data)
   log.info(`
     Distribute Tokens
 
@@ -99,4 +85,4 @@ const validateDistribution = async (data, fromAccount, ethNetwork) => {
   }
 }
 
-module.exports = { distributeTokens }
+module.exports = { distributeTokens, parseCSV, formatDataForDisplay }

@@ -1,10 +1,10 @@
 const { prompt } = require('inquirer')
 const { utils } = require('web3')
+const namehash = require('eth-ens-namehash')
 
 const config = require('./config')
 const customHandlers = require('./customHandlers')
 const { log } = require('./cli-utils')
-const namehash = require('eth-ens-namehash')
 const { GAS_LIMIT, GAS_PRICE } = require('./constants')
 
 const getCustomHandler = (contractName, method) => {
