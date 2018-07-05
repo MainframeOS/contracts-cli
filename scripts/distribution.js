@@ -67,7 +67,7 @@ const fetchNextBatch = async () => {
     } else {
       return {
         entries: [],
-        hasMore: true,
+        hasMore: res.body.pendingSubscribers !== 0,
       }
     }
   } else {
