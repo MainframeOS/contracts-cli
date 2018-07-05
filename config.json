@@ -3,7 +3,7 @@
   "contractAddresses": {
     "MainframeToken": {
       "testnet": "0xa46f1563984209fe47f8236f8b01a03f03f957e4",
-      "mainnet": "0x46627F7f7F41197A47528c52cdD2F4575b49Cc56"
+      "mainnet": "0xdf2c7238198ad8b389666574f2d8bc411a4b7428"
     },
     "MainframeStake": {
       "testnet": "0x1cfd4590d193480f100ac58b845314a978b0ec70",
@@ -11,7 +11,7 @@
     },
     "MainframeDistribution": {
       "testnet": "0x24711134d0a60e4af5c6daa60f3a22b9db1d2a97",
-      "mainnet": "0x6fD1B41e9FFC477C6801a26f6F36DE48746Bee74"
+      "mainnet": "0xFa79D79f9F427d4ea2dF5B418C7e12f3D713C131"
     },
     "ENS": {
       "testnet": "0x112234455c3a32fd11230c42e7bccd4a84e02010",
