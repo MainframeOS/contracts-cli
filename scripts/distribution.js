@@ -4,28 +4,35 @@ const Web3 = require('web3')
 const fs = require('fs-extra')
 const path = require('path')
 const got = require('got')
+const argv = require('yargs').argv
 
 const config = require('../config')
 const { estimateGas, getRecomendedGasPrice } = require('../helpers')
 const { log, capitalize } = require('../cli-utils')
 
-const BATCH_AMOUNT = 40
-const SEND_AMOUNT = 0 // TODO: put real amount
-const MAX_GAS_PRICE = 50 // TODO: put real amount in Gwei
-const ESTIMATE_INTERVAL = 30000 // 30 seconds in milliseconds
-const SENDER_ADDRESS = '0x6E6Bda8B1ec708Bd4Ce4f000B464557657988806'
-const NETWORK = process.env.NETWORK === 'mainnet' ? 'mainnet' : 'testnet'
-const AUTHORIZATION = process.env.AUTHORIZATION // TODO: get from secure AWS store
-const PRIVATE_KEY = process.env.PRIVATE_KEY // TODO: get from secure AWS store
-const API_URL = 'https://global-airdrop-distro.herokuapp.com'
+const BATCH_AMOUNT = argv.batchsize || 40
+const SEND_AMOUNT = argv.amount
+const MAX_GAS_PRICE = argv.maxprice || 50 // TODO: put real amount in Gwei
+const ESTIMATE_INTERVAL = argv.interval || 30000 // 30 seconds in milliseconds
+const SENDER_ADDRESS = argv.tokenholder
+const NETWORK = argv.network === 'mainnet' ? 'mainnet' : 'testnet'
+const AUTHORIZATION = argv.authorization
+const PRIVATE_KEY = argv.key
+const API_URL = 'http://localhost:3000' // 'https://global-airdrop-distro.herokuapp.com'
 const SUBSCRIBERS_URL = API_URL + '/subscribers'
 const REGISTER_URL = API_URL + '/register'
 
+if (SEND_AMOUNT == null) {
+  throw new Error('Missing `amount` argument')
+}
+if (SENDER_ADDRESS == null || SENDER_ADDRESS === '') {
+  throw new Error('Missing `tokenholder` (address) argument')
+}
 if (AUTHORIZATION == null || AUTHORIZATION === '') {
-  throw new Error('Missing AUTHORIZATION environment variable for HTTP header')
+  throw new Error('Missing `authorization` (HTTP header for API) argument')
 }
 if (PRIVATE_KEY == null || PRIVATE_KEY === '') {
-  throw new Error('Missing PRIVATE_KEY environment variable')
+  throw new Error('Missing `key` (wallet private key) argument')
 }
 
 let web3
@@ -41,7 +48,10 @@ const fetchNextBatch = async () => {
     json: true,
   })
   if (res.body.ok) {
-    return res.body.result
+    return {
+      entries: res.body.result,
+      hasMore: res.body.pendingSubscribers !== 0,
+    }
   } else {
     throw new Error('Invalid response body')
   }
@@ -59,12 +69,11 @@ const processTransactions = async gasPrice => {
   processingTransactions = true
   console.log('process transactions with gas price:', gasPrice)
 
-  let entries
   try {
-    entries = await fetchNextBatch()
-    if (entries.length === 0) {
+    const { entries, hasMore } = await fetchNextBatch()
+    if (entries.length === 0 && !hasMore) {
       clearInterval(estimateTimer)
-      console.log('No more entries from API - DONE!')
+      console.log('no more entries from API - DONE!')
       return
     }
 
@@ -77,6 +86,7 @@ const processTransactions = async gasPrice => {
       account,
       args,
     )
+    console.log('running distribution with gas limit:', gasLimit)
     const receipt = await web3Contract.methods.distributeTokens(...args).send({
       from: account,
       gas: gasLimit,
@@ -89,7 +99,7 @@ const processTransactions = async gasPrice => {
     await commitBatch(txs)
     console.log('transaction processed')
   } catch (err) {
-    console.warn('Error processing transations', err, entries)
+    console.warn('error processing transations:', err)
   }
 
   processingTransactions = false
@@ -101,6 +111,8 @@ const runEstimate = async () => {
     console.log('current gas price:', gasPrice)
     if (gasPrice <= MAX_GAS_PRICE) {
       processTransactions(gasPrice)
+    } else {
+      console.log('gas price above limit:', MAX_GAS_PRICE)
     }
   }
 }
@@ -117,8 +129,7 @@ const setup = async () => {
     abi,
     config.contractAddresses.MainframeDistribution[NETWORK],
   )
-  account = web3.eth.accounts.privateKeyToAccount(PRIVATE_KEY)
-  console.log('using account:', account.address)
+  account = web3.eth.accounts.privateKeyToAccount(PRIVATE_KEY).address
 
   // Setup interval to keep script alive, should get cleared once the API doesn't return any entry
   estimateTimer = setInterval(runEstimate, ESTIMATE_INTERVAL)
