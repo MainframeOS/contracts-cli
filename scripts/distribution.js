@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 
+// usage (from repo root): ./scripts/distribution.js --tokenholder=<ADDRESS> --amount=<NUMBER OF MFT TO SEND> --batchsize=<NUMBER OF RECIPIENTS PER BATCH> --maxprice=<MAX GAS PRICE IN GWEI> --authorization=<AUTHORIZATION HEADER> --key=<PRIVATE KEY>
+
 const Web3 = require('web3')
+const HDWalletProviderPK = require('truffle-hdwallet-provider-privkey')
 const fs = require('fs-extra')
 const path = require('path')
 const got = require('got')
-const argv = require('yargs').argv
+const { argv } = require('yargs')
 
 const config = require('../config')
 const { estimateGas, getRecomendedGasPrice } = require('../helpers')
@@ -12,7 +15,7 @@ const { log, capitalize } = require('../cli-utils')
 
 const BATCH_AMOUNT = argv.batchsize || 40
 const SEND_AMOUNT = argv.amount
-const MAX_GAS_PRICE = argv.maxprice || 50 // TODO: put real amount in Gwei
+const MAX_GAS_PRICE = argv.maxprice
 const ESTIMATE_INTERVAL = argv.interval || 30000 // 30 seconds in milliseconds
 const SENDER_ADDRESS = argv.tokenholder
 const NETWORK = argv.network === 'mainnet' ? 'mainnet' : 'testnet'
@@ -24,6 +27,9 @@ const REGISTER_URL = API_URL + '/register'
 
 if (SEND_AMOUNT == null) {
   throw new Error('Missing `amount` argument')
+}
+if (MAX_GAS_PRICE == null) {
+  throw new Error('Missing `maxprice` (max gas in Gwei) argument')
 }
 if (SENDER_ADDRESS == null || SENDER_ADDRESS === '') {
   throw new Error('Missing `tokenholder` (address) argument')
@@ -47,6 +53,7 @@ const fetchNextBatch = async () => {
     headers: { authorization: AUTHORIZATION },
     json: true,
   })
+  console.log('fetchNextBatch res', res.body)
   if (res.body.ok) {
     return {
       entries: res.body.result,
@@ -71,12 +78,21 @@ const processTransactions = async gasPrice => {
 
   try {
     const { entries, hasMore } = await fetchNextBatch()
-    if (entries.length === 0 && !hasMore) {
-      clearInterval(estimateTimer)
-      console.log('no more entries from API - DONE!')
+    if (entries.length === 0) {
+      if (hasMore) {
+        // empty batch - cancel processing
+        console.log('no entry in latest batch from API')
+        processingTransactions = false
+      } else {
+        // all entries are processed
+        clearInterval(estimateTimer)
+        console.log('no more entries from API - DONE!')
+        process.exit(0)
+      }
       return
     }
 
+    console.log('entries from API:', entries.length)
     const recipients = entries.map(e => e.address)
     const amounts = entries.map(() => SEND_AMOUNT)
     const args = [SENDER_ADDRESS, recipients, amounts]
@@ -92,12 +108,13 @@ const processTransactions = async gasPrice => {
       gas: gasLimit,
       gasPrice: gasPrice,
     })
+    console.log('transaction processed:', receipt.transactionHash)
     const txs = entries.map(e => ({
       token: e.token,
       txid: receipt.transactionHash,
     }))
     await commitBatch(txs)
-    console.log('transaction processed')
+    console.log('transaction committed to API for recipients:', recipients)
   } catch (err) {
     console.warn('error processing transations:', err)
   }
@@ -119,7 +136,7 @@ const runEstimate = async () => {
 
 const setup = async () => {
   // Setup distribution contract and account
-  provider = new Web3.providers.HttpProvider(config.rpcUrl[NETWORK])
+  provider = new HDWalletProviderPK(PRIVATE_KEY, config.rpcUrl[NETWORK])
   web3 = new Web3(provider)
 
   const abi = await fs.readJson(
@@ -129,7 +146,8 @@ const setup = async () => {
     abi,
     config.contractAddresses.MainframeDistribution[NETWORK],
   )
-  account = web3.eth.accounts.privateKeyToAccount(PRIVATE_KEY).address
+  account = await web3.eth.getCoinbase()
+  console.log('using account:', account)
 
   // Setup interval to keep script alive, should get cleared once the API doesn't return any entry
   estimateTimer = setInterval(runEstimate, ESTIMATE_INTERVAL)
