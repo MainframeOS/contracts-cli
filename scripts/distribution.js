@@ -56,9 +56,19 @@ const fetchNextBatch = async () => {
   })
   console.log('fetchNextBatch res', res.body)
   if (res.body.ok) {
-    return {
-      entries: res.body.result,
-      hasMore: res.body.pendingSubscribers !== 0,
+    if (
+      res.body.result.length === BATCH_AMOUNT ||
+      BATCH_AMOUNT >= res.body.pendingSubscribers
+    ) {
+      return {
+        entries: res.body.result,
+        hasMore: res.body.pendingSubscribers !== 0,
+      }
+    } else {
+      return {
+        entries: [],
+        hasMore: res.body.pendingSubscribers !== 0,
+      }
     }
   } else {
     throw new Error('Invalid response body')
