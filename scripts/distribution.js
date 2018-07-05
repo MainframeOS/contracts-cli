@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// usage (from repo root): ./scripts/distribution.js --tokenholder=<ADDRESS> --amount=<NUMBER OF MFT TO SEND> --batchsize=<NUMBER OF RECIPIENTS PER BATCH> --maxprice=<MAX GAS PRICE IN GWEI> --authorization=<AUTHORIZATION HEADER> --key=<PRIVATE KEY>
+// usage (from repo root): ./scripts/distribution.js --network=<'testnet' | 'mainnet'> --tokenholder=<ADDRESS> --amount=<NUMBER OF MFT TO SEND> --batchsize=<NUMBER OF RECIPIENTS PER BATCH> --maxprice=<MAX GAS PRICE IN GWEI> --authorization=<AUTHORIZATION HEADER> --key=<PRIVATE KEY>
 
 const Web3 = require('web3')
 const HDWalletProviderPK = require('truffle-hdwallet-provider-privkey')
@@ -21,7 +21,8 @@ const SENDER_ADDRESS = argv.tokenholder
 const NETWORK = argv.network === 'mainnet' ? 'mainnet' : 'testnet'
 const AUTHORIZATION = argv.authorization
 const PRIVATE_KEY = argv.key
-const API_URL = 'http://localhost:3000' // 'https://global-airdrop-distro.herokuapp.com'
+const API_URL =
+  process.env.API_URL || 'https://global-airdrop-distro.herokuapp.com'
 const SUBSCRIBERS_URL = API_URL + '/subscribers'
 const REGISTER_URL = API_URL + '/register'
 
