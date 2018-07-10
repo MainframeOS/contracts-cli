@@ -8,6 +8,7 @@ const fs = require('fs-extra')
 const path = require('path')
 const got = require('got')
 const { argv } = require('yargs')
+const utils = require('web3-utils')
 
 const config = require('../config')
 const { estimateGas, getRecomendedGasPrice } = require('../helpers')
@@ -57,7 +58,7 @@ const fetchNextBatch = async () => {
   console.log('fetchNextBatch res', res.body)
   if (res.body.ok) {
     if (
-      res.body.result.length === BATCH_AMOUNT ||
+      res.body.result.length == BATCH_AMOUNT ||
       BATCH_AMOUNT >= res.body.pendingSubscribers
     ) {
       return {
@@ -105,19 +106,27 @@ const processTransactions = async gasPrice => {
 
     console.log('entries from API:', entries.length)
     const recipients = entries.map(e => e.address)
-    const amounts = entries.map(() => SEND_AMOUNT)
+    const amounts = entries.map(() => {
+      return utils.toWei(String(SEND_AMOUNT))
+    })
     const args = [SENDER_ADDRESS, recipients, amounts]
+    const gasPriceWei = utils.toWei(String(gasPrice + 3), 'gwei')
     const gasLimit = await estimateGas(
       web3Contract,
       'distributeTokens',
       account,
       args,
     )
-    console.log('running distribution with gas limit:', gasLimit)
+    console.log(
+      'running distribution with gas limit:',
+      gasLimit,
+      'price: ',
+      gasPriceWei,
+    )
     const receipt = await web3Contract.methods.distributeTokens(...args).send({
       from: account,
       gas: gasLimit,
-      gasPrice: gasPrice,
+      gasPrice: gasPriceWei,
     })
     console.log('transaction processed:', receipt.transactionHash)
     const txs = entries.map(e => ({

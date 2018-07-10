@@ -19,5 +19,8 @@
     "web3": "1.0.0-beta.34",
     "web3-provider-engine": "^14.0.4",
     "yargs": "^12.0.1"
+  },
+  "yargs": {
+    "parse-numbers": false
   }
 }
