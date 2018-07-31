@@ -5,25 +5,30 @@ const utils = require('web3-utils')
 
 const config = require('../config')
 const tokenAbi = require('../abi/MainframeDistribution.json')
+const { estimateGas, getRecomendedGasPrice } = require('../helpers')
 const { log } = require('../cli-utils')
-const { GAS_PRICE } = require('../constants')
 
 const distributeTokens = async (web3Contract, ethNetwork, account) => {
+  const tokenHolder = await requestTokenHolder()
   const data = await parseCSV()
   await validateDistribution(data, account, ethNetwork)
   const gasLimit = await estimateGas(
     web3Contract,
+    'distributeTokens',
     account,
-    data.recipients,
-    data.amounts,
+    [tokenHolder, data.recipients, data.amounts],
   )
+  const gasPrice = await getRecomendedGasPrice()
+
+  log.info(`Estimated gas: ${gasLimit}`, 'blue')
+  log.info(`Recommended gas price: ${gasPrice}`, 'blue')
   log.info('Pending transaction...', 'blue')
   const transaction = await web3Contract.methods
-    .distributeTokens(account, data.recipients, data.amounts)
+    .distributeTokens(tokenHolder, data.recipients, data.amounts)
     .send({
       from: account,
       gas: gasLimit,
-      gasPrice: GAS_PRICE,
+      gasPrice: gasPrice,
     })
   log.success('Transaction complete!')
   console.log(transaction)
@@ -54,31 +59,15 @@ const parseCSV = async () => {
   })
 }
 
-const estimateGas = async (web3Contract, account, recipients, amounts) => {
-  const estimatedGas = await web3Contract.methods
-    .distributeTokens(account, recipients, amounts)
-    .estimateGas({ from: account })
-  log.info(`estimatd gas: ${estimatedGas}`, 'blue')
-  const answers = await prompt([
-    {
-      type: 'confirm',
-      name: 'confirm',
-      message: 'Proceed with estimated gas: ',
-    },
-  ])
-  if (!answers.confirm) {
-    log.warn('Distribution terminated')
-    process.exit()
-  } else {
-    return estimatedGas
-  }
-}
-
-const validateDistribution = async (data, fromAccount, ethNetwork) => {
-  const dataForDisplay = data.recipients.reduce((string, r, i) => {
+const formatDataForDisplay = data => {
+  return data.recipients.reduce((string, r, i) => {
     const amount = data.amounts[i]
     return (string += `${r} : ${utils.fromWei(amount, config.tokenDecimals)}\n`)
   }, '')
+}
+
+const validateDistribution = async (data, fromAccount, ethNetwork) => {
+  const dataForDisplay = formatDataForDisplay(data)
   log.info(`
     Distribute Tokens
 
@@ -99,4 +88,18 @@ const validateDistribution = async (data, fromAccount, ethNetwork) => {
   }
 }
 
-module.exports = { distributeTokens }
+const requestTokenHolder = async () => {
+  const answers = await prompt([
+    {
+      type: 'input',
+      name: 'tokenHolder',
+      message: 'Token holder: ',
+    },
+  ])
+  if (!utils.isAddress(answers.tokenHolder)) {
+    throw new Error('Invalid address')
+  }
+  return answers.tokenHolder
+}
+
+module.exports = { distributeTokens, parseCSV, formatDataForDisplay }
