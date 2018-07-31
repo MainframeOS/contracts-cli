@@ -1,5 +1,4 @@
-const { log } = require('./cli-utils')
-const request = require('request-promise')
+const got = require('got')
 
 const estimateGas = async (web3Contract, method, account, args) => {
   return await web3Contract.methods[method](...args).estimateGas({
@@ -8,9 +7,10 @@ const estimateGas = async (web3Contract, method, account, args) => {
 }
 
 const getRecomendedGasPrice = async () => {
-  const res = await request('https://ethgasstation.info/json/ethgasAPI.json')
-  const json = JSON.parse(res)
-  const gweiPrice = json.average / 10
+  const res = await got('https://ethgasstation.info/json/ethgasAPI.json', {
+    json: true,
+  })
+  const gweiPrice = res.body.average / 10
   return gweiPrice
 }
 
