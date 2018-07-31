@@ -9,20 +9,22 @@ const { estimateGas, getRecomendedGasPrice } = require('../helpers')
 const { log } = require('../cli-utils')
 
 const distributeTokens = async (web3Contract, ethNetwork, account) => {
+  const tokenHolder = await requestTokenHolder()
   const data = await parseCSV()
   await validateDistribution(data, account, ethNetwork)
   const gasLimit = await estimateGas(
     web3Contract,
     'distributeTokens',
     account,
-    [account, data.recipients, data.amounts],
+    [tokenHolder, data.recipients, data.amounts],
   )
   const gasPrice = await getRecomendedGasPrice()
+
   log.info(`Estimated gas: ${gasLimit}`, 'blue')
   log.info(`Recommended gas price: ${gasPrice}`, 'blue')
   log.info('Pending transaction...', 'blue')
   const transaction = await web3Contract.methods
-    .distributeTokens(account, data.recipients, data.amounts)
+    .distributeTokens(tokenHolder, data.recipients, data.amounts)
     .send({
       from: account,
       gas: gasLimit,
@@ -84,6 +86,20 @@ const validateDistribution = async (data, fromAccount, ethNetwork) => {
     log.warn('Distribution terminated')
     process.exit()
   }
+}
+
+const requestTokenHolder = async () => {
+  const answers = await prompt([
+    {
+      type: 'input',
+      name: 'tokenHolder',
+      message: 'Token holder: ',
+    },
+  ])
+  if (!utils.isAddress(answers.tokenHolder)) {
+    throw new Error('Invalid address')
+  }
+  return answers.tokenHolder
 }
 
 module.exports = { distributeTokens, parseCSV, formatDataForDisplay }
