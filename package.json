@@ -1,13 +1,27 @@
 {
   "name": "contracts-cli",
   "version": "0.1.0",
-  "main": "index.js",
+  "main": "lib/index.js",
   "author": "Mainframe",
+  "description": "Command line tool for interacting with Ethereum smart contracts",
+  "repository": "git@github.com:MainframeHQ/contracts-cli.git",
   "license": "MIT",
   "preferGlobal": true,
-  "bin": "./index.js",
+  "bin": "./lib/index.js",
+  "scripts": {
+    "clean": "del lib",
+    "build:js": "BABEL_ENV=node babel src --out-dir lib",
+    "build:flow": "flow-copy-source src lib",
+    "build": "yarn clean && yarn build:js && yarn build:flow",
+    "lint": "eslint src",
+    "test:types": "flow check",
+    "test": "yarn lint && yarn test:types",
+    "prepublishOnly": "yarn build"
+  },
   "dependencies": {
     "chalk": "^2.4.0",
+    "commander": "^2.17.1",
+    "config": "^2.0.1",
     "csv-parser": "^1.12.1",
     "eth-ens-namehash": "^2.0.8",
     "fs-extra": "^5.0.0",
@@ -22,5 +36,20 @@
   },
   "yargs": {
     "parse-numbers": false
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-eslint": "^8.2.6",
+    "babel-plugin-syntax-class-properties": "^6.13.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-flow": "^6.23.0",
+    "del-cli": "^1.1.0",
+    "eslint": "^5.3.0",
+    "eslint-config-mainframe": "^1.4.0",
+    "flow-bin": "^0.79.1",
+    "flow-copy-source": "^2.0.2",
+    "prettier": "^1.14.0"
   }
 }

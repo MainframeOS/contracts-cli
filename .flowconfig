@@ -1,0 +1,8 @@
+[ignore]
+<PROJECT_ROOT>/lib/.*
+.*/node_modules/config-chain/test/.*
+.*/node_modules/oboe/test/.*
+
+[include]
+
+[libs]

@@ -1,23 +1,25 @@
-const chalk = require('chalk')
+import chalk from 'chalk'
 
-const log = {
-  header: (title) => {
+export const log = {
+  header: title => {
+    // eslint-disable-next-line no-console
     console.log(chalk.bold(`\n---- ${title}\n`))
   },
   info: (text, color) => {
     const textColor = color || 'white'
+    // eslint-disable-next-line no-console
     console.log(chalk[textColor](`\n${text}\n`))
   },
-  success: (text) => {
+  success: text => {
+    // eslint-disable-next-line no-console
     console.log(chalk.green(`\n${text}\n`))
   },
-  warn: (text) => {
+  warn: text => {
+    // eslint-disable-next-line no-console
     console.log(chalk.red(`\n${text}\n`))
   },
 }
 
-const capitalize = (s) => {
+export const capitalize = s => {
   return s[0].toUpperCase() + s.slice(1)
 }
-
-module.exports = { log, capitalize }

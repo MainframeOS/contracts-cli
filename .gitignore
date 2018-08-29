@@ -1,2 +1,4 @@
 node_modules
 keys
+lib
+.DS_Store

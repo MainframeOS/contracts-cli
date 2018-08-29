@@ -1,18 +1,21 @@
-const fs = require('fs-extra')
-const Accounts = require('web3-eth-accounts')
-const Web3 = require('web3')
-const HDWalletProvider = require('truffle-hdwallet-provider')
-const HDWalletProviderPK = require('truffle-hdwallet-provider-privkey')
-const ProviderEngine = require('web3-provider-engine')
-const RpcSubprovider = require('web3-provider-engine/subproviders/rpc')
-const LedgerWalletSubproviderFactory = require('ledger-wallet-provider').default
-const { prompt } = require('inquirer')
+// @flow
 
-const config = require('./config')
+import fs from 'fs-extra'
+import Accounts from 'web3-eth-accounts'
+import Web3 from 'web3'
+import HDWalletProvider from 'truffle-hdwallet-provider'
+import HDWalletProviderPK from 'truffle-hdwallet-provider-privkey'
+import ProviderEngine from 'web3-provider-engine'
+import RpcSubprovider from 'web3-provider-engine/subproviders/rpc'
+import LedgerWalletSubproviderFactory from 'ledger-wallet-provider'
+import { prompt } from 'inquirer'
+
+import type { EthNetwork } from './types'
+import { log } from './cli-utils'
 
 const LEDGER_ROOT_PATH = `44'/60'/0'/0`
 
-const decodeKeystore = async path => {
+const decodeKeystore = async (path?: string) => {
   const questions = [
     {
       type: 'input',
@@ -56,7 +59,7 @@ const requestMnemonic = async () => {
   return answers.mnemonic
 }
 
-const requestAccountSelection = async accounts => {
+const requestAccountSelection = async (accounts: Array<string>) => {
   const answers = await prompt([
     {
       type: 'list',
@@ -68,7 +71,10 @@ const requestAccountSelection = async accounts => {
   return accounts.indexOf(answers.account)
 }
 
-const openWallet = async ethNetwork => {
+export const openWallet = async (
+  ethNetwork: EthNetwork,
+  rpcUrl: string,
+): Promise<Web3> => {
   const answers = await prompt([
     {
       type: 'list',
@@ -78,27 +84,32 @@ const openWallet = async ethNetwork => {
     },
   ])
   let provider
+  let web3
   switch (answers.wallet) {
-    case 'Private Key':
+    case 'Private Key': {
       const key = await requestPrivateKey()
-      provider = new HDWalletProviderPK(key, config.rpcUrl[ethNetwork])
+      provider = new HDWalletProviderPK(key, rpcUrl)
       web3 = new Web3(provider)
       break
-    case 'Keystore File':
+    }
+    case 'Keystore File': {
       let decodedKey = await decodeKeystore()
       if (decodedKey.slice(0, 2) === '0x') {
         decodedKey = decodedKey.slice(2, decodedKey.length)
       }
-      provider = new HDWalletProviderPK(decodedKey, config.rpcUrl[ethNetwork])
+      provider = new HDWalletProviderPK(decodedKey, rpcUrl)
       web3 = new Web3(provider)
       break
-    case 'Mnemonic':
+    }
+    case 'Mnemonic': {
       const mnemonic = await requestMnemonic()
-      provider = new HDWalletProvider(mnemonic, config.rpcUrl[ethNetwork])
+      provider = new HDWalletProvider(mnemonic, rpcUrl)
       web3 = new Web3(provider)
       break
+    }
     case 'Ledger':
-      let engine = new ProviderEngine()
+    default: {
+      const engine = new ProviderEngine()
       web3 = new Web3(engine)
       try {
         const ledgerWalletSubProvider = await LedgerWalletSubproviderFactory()
@@ -117,36 +128,36 @@ const openWallet = async ethNetwork => {
 
         let selectedPath
 
-        switch (choices.indexOf(answers.accountSelect)) {
-          case 0:
-            // Select ledger account from list
-            const listAccounts = await ledgerWalletSubProvider.ledger.getMultipleAccounts(
-              LEDGER_ROOT_PATH,
-              0,
-              10,
-            )
-            const accountAddresses = Object.values(listAccounts)
-            const accountPaths = Object.keys(listAccounts)
-            const account = Object.values(listAccounts)
-            accountIndex = await requestAccountSelection(accountAddresses)
-            selectedPath = accountPaths[accountIndex]
-            break
-
-          case 1:
-            // Select ledger account from input index
-            const ledgerIndexAnswers = await prompt([
-              {
-                type: 'input',
-                name: 'accountIndex',
-                message: 'Ledger account select: ',
-              },
-            ])
-            const accounts = await ledgerWalletSubProvider.ledger.getMultipleAccounts(
-              LEDGER_ROOT_PATH,
-              Number(ledgerIndexAnswers.accountIndex) - 1,
-              1,
-            )
-            selectedPath = Object.keys(accounts)[0]
+        if (choices.indexOf(answers.accountSelect) === 0) {
+          // Select ledger account from list
+          const listAccounts: {
+            [string]: string,
+          } = await ledgerWalletSubProvider.ledger.getMultipleAccounts(
+            LEDGER_ROOT_PATH,
+            0,
+            10,
+          )
+          const accountAddresses = Object.values(listAccounts)
+          const accountPaths = Object.keys(listAccounts)
+          // $FlowFixMe: Object.values return Array<any>
+          const accountIndex = await requestAccountSelection(accountAddresses)
+          selectedPath = accountPaths[accountIndex]
+          break
+        } else {
+          // Select ledger account from input index
+          const ledgerIndexAnswers = await prompt([
+            {
+              type: 'input',
+              name: 'accountIndex',
+              message: 'Ledger account select: ',
+            },
+          ])
+          const accounts = await ledgerWalletSubProvider.ledger.getMultipleAccounts(
+            LEDGER_ROOT_PATH,
+            Number(ledgerIndexAnswers.accountIndex) - 1,
+            1,
+          )
+          selectedPath = Object.keys(accounts)[0]
         }
 
         // Set selected account as provider
@@ -156,21 +167,17 @@ const openWallet = async ethNetwork => {
           selectedPath,
         )
         engine.addProvider(ledgerWalletSelectedProvider)
-        engine.addProvider(
-          new RpcSubprovider({ rpcUrl: config.rpcUrl[ethNetwork] }),
-        )
+        engine.addProvider(new RpcSubprovider({ rpcUrl }))
         engine.start()
       } catch (err) {
-        console.log(err)
-        console.log(`Error connecting to Ledger, please make sure:\n
+        log.warn(err)
+        log.info(`Error connecting to Ledger, please make sure:\n
         - You have entered your pin and unlocked your ledger\n
         - Selected Ethereum wallet\n
         - Have browser support turned off`)
         process.exit()
       }
-      break
+    }
   }
   return web3
 }
-
-module.exports = { openWallet }
