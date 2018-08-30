@@ -1,6 +1,6 @@
 {
   "name": "contracts-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "lib/index.js",
   "author": "Mainframe",
   "description": "Command line tool for interacting with Ethereum smart contracts",
@@ -8,6 +8,7 @@
   "license": "MIT",
   "preferGlobal": true,
   "bin": "./lib/index.js",
+  "files": ["lib/*", "config.json", "abi/*"],
   "scripts": {
     "clean": "del lib",
     "build:js": "BABEL_ENV=node babel src --out-dir lib",

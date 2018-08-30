@@ -142,7 +142,6 @@ export const openWallet = async (
           // $FlowFixMe: Object.values return Array<any>
           const accountIndex = await requestAccountSelection(accountAddresses)
           selectedPath = accountPaths[accountIndex]
-          break
         } else {
           // Select ledger account from input index
           const ledgerIndexAnswers = await prompt([
