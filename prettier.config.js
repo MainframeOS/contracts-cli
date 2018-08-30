@@ -1,7 +1,1 @@
-module.exports = {
-  bracketSpacing: true,
-  jsxBracketSameLine: true,
-  semi: false,
-  singleQuote: true,
-  trailingComma: 'all',
-}
+module.exports = require('eslint-config-mainframe/prettier.config')

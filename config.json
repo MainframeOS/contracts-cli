@@ -1,18 +1,5 @@
 {
-  "tokenDecimals": "ether",
   "contractAddresses": {
-    "MainframeToken": {
-      "testnet": "0xf5c7c995259b296cf50374f32e4dab96df576598",
-      "mainnet": "0x46627F7f7F41197A47528c52cdD2F4575b49Cc56"
-    },
-    "MainframeStake": {
-      "testnet": "0x1cfd4590d193480f100ac58b845314a978b0ec70",
-      "mainnet": "0x459Ec81aBaaA2f95EE0a1Ad35Df62ae4bDF3c3d2"
-    },
-    "MainframeDistribution": {
-      "testnet": "0x14a569e9ce5f8e0f458e2cc01ce67ef2a737bd7e",
-      "mainnet": "0x6fD1B41e9FFC477C6801a26f6F36DE48746Bee74"
-    },
     "ENS": {
       "testnet": "0x112234455c3a32fd11230c42e7bccd4a84e02010",
       "mainnet": "0x314159265dd8dbb310642f98f50c066173c1259b"
@@ -24,9 +11,5 @@
     "FIFSRegistrar": {
       "testnet": "0x21397c1A1F4aCD9132fE36Df011610564b87E24b"
     }
-  },
-  "rpcUrl": {
-    "testnet": "https://ropsten.infura.io/KWLG1YOMaYgl4wiFlcJv",
-    "mainnet": "https://mainnet.infura.io/KWLG1YOMaYgl4wiFlcJv"
   }
 }
