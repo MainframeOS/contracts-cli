@@ -13,6 +13,7 @@ from inside contracts-cli directory run:
 
 ```
 ❯ yarn
+❯ yarn build
 ❯ yarn link
 ```
 
