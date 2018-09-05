@@ -53,8 +53,10 @@ log.header(`\nEthereum ${ethNetwork}\n`)
 
 const startCli = async () => {
   try {
-    const web3 = await openWallet(ethNetwork, config.rpcUrl[ethNetwork])
-    const account = await web3.eth.getCoinbase()
+    const { web3, account } = await openWallet(
+      ethNetwork,
+      config.rpcUrl[ethNetwork],
+    )
 
     log.info(`Using account: ${account}`, 'blue')
     await callContract(web3, ethNetwork, config)
