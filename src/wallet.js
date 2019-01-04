@@ -1,5 +1,12 @@
 // @flow
 
+import '@babel/polyfill'
+
+/*
+Using babel polyfill until ledger modules are updated:
+https://github.com/LedgerHQ/ledgerjs/issues/211
+*/
+
 import fs from 'fs-extra'
 import Accounts from 'web3-eth-accounts'
 import Web3 from 'web3'

@@ -1,33 +1,14 @@
 {
-  "presets": ["flow"],
-  "env": {
-    "node": {
-      "presets": [
-        [
-          "env",
-          {
-            "targets": {
-              "node": 8
-            },
-            "modules": "commonjs",
-            "loose": true
-          }
-        ]
-      ],
-      "plugins": ["syntax-class-properties", "transform-class-properties"]
-    },
-    "test": {
-      "presets": [
-        [
-          "env",
-          {
-            "targets": {
-              "node": "current"
-            }
-          }
-        ]
-      ],
-      "plugins": ["syntax-class-properties", "transform-class-properties"]
-    }
-  }
+  "plugins": ["@babel/transform-runtime"],
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "targets": {
+          "node": 10
+        }
+      }
+    ],
+    "@babel/preset-flow"
+  ]
 }

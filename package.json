@@ -1,6 +1,6 @@
 {
   "name": "contracts-cli",
-  "version": "0.1.2",
+  "version": "0.1.7",
   "main": "lib/index.js",
   "author": "Mainframe",
   "description": "Command line tool for interacting with Ethereum smart contracts",
@@ -8,10 +8,14 @@
   "license": "MIT",
   "preferGlobal": true,
   "bin": "./lib/index.js",
-  "files": ["lib/*", "config.json", "abi/*"],
+  "files": [
+    "lib/*",
+    "config.json",
+    "abi/*"
+  ],
   "scripts": {
     "clean": "del lib",
-    "build:js": "BABEL_ENV=node babel src --out-dir lib",
+    "build:js": "babel src --out-dir lib",
     "build:flow": "flow-copy-source src lib",
     "build": "yarn clean && yarn build:js && yarn build:flow",
     "lint": "eslint src",
@@ -20,6 +24,7 @@
     "prepublishOnly": "yarn build"
   },
   "dependencies": {
+    "@babel/runtime": "^7.1.2",
     "@ledgerhq/hw-transport-node-hid": "^4.22.0",
     "@ledgerhq/web3-subprovider": "^4.21.0",
     "chalk": "^2.4.0",
@@ -40,13 +45,15 @@
     "parse-numbers": false
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.3",
-    "babel-eslint": "^8.2.6",
-    "babel-plugin-syntax-class-properties": "^6.13.0",
-    "babel-plugin-transform-class-properties": "^6.24.1",
-    "babel-preset-env": "^1.7.0",
-    "babel-preset-flow": "^6.23.0",
+    "@babel/cli": "^7.1.2",
+    "@babel/core": "^7.1.2",
+    "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
+    "@babel/plugin-transform-runtime": "^7.1.0",
+    "@babel/polyfill": "^7.2.5",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/preset-flow": "^7.0.0",
+    "babel-eslint": "^10.0.1",
     "del-cli": "^1.1.0",
     "eslint": "^5.3.0",
     "eslint-config-mainframe": "^1.4.0",

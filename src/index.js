@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 // @flow
+import '@babel/polyfill'
+
+/*
+Using babel polyfill until ledger modules are updated:
+https://github.com/LedgerHQ/ledgerjs/issues/211
+*/
 
 import path from 'path'
 import program from 'commander'
@@ -29,7 +35,7 @@ if (program.configPath) {
 }
 
 if (program.rpcUrl) {
-  config.rpcUrl[ethNetwork] = program.rpcUrl
+  config.rpcUrl = { [ethNetwork]: program.rpcUrl }
 }
 
 if (program.abiDir) {
@@ -41,8 +47,7 @@ if (program.abiDir) {
   )
   process.exit()
 }
-
-if (!config.rpcUrl) {
+if (!Object.keys(config.rpcUrl).length) {
   log.warn(
     'rpc url required, please set config file or pass as arg, e.g.: --rpc-url="https://ropsten.infura.io/FWLG9Y..."',
   )
